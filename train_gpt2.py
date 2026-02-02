@@ -109,6 +109,7 @@ class GPT(nn.Module):
         if targets is not None:
             loss = F.cross_entropy(logits.view(-1, logits.size(-1)), targets.view(-1))
         return logits, loss
+        # return logits
 
     @classmethod
     def from_pretrained(cls, model_type):
@@ -174,8 +175,28 @@ print(f"using device : {device}")
 num_return_sequences = 5
 max_length = 30
 
-model = GPT.from_pretrained('gpt2')
-# model = GPT(GPTConfig())# from scratch
+# get a data batch
+import tiktoken
+enc = tiktoken.get_encoding('gpt2')
+with open("input.txt","r") as f:
+    text = f.read()
+text = text[:1000]
+tokens = enc.encode(text)
+B,T = 4,32
+buf = torch.tensor(tokens[:B*T + 1])
+x = buf[:-1].view(B,T)
+y = buf[1:].view(B,T)
+
+# get logits
+model = GPT(GPTConfig())# from scratch
+model.to(device)
+logits,loss = model(x,y)
+print(loss)
+import sys; sys.exit(0)
+
+
+# model = GPT.from_pretrained('gpt2')
+model = GPT(GPTConfig())# from scratch
 model.eval()
 model.to(device)
 
